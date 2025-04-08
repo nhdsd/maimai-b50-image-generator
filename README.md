@@ -11,7 +11,7 @@
 在[水鱼查分器](https://www.diving-fish.com/maimaidx/prober/)注册一个自己的账号，并按照网页提示导入你的数据。
 
 ### 2 下载最新版脚本
-在[Release](https://github.com/nhdsd/maimai-b50-image-generator)处下载最新版本。
+在[Release](https://github.com/nhdsd/maimai-b50-image-generator)处下载最新版本。[从最新commit构建...](#非发布版)
 
 ### 3 下载资源文件
 前往[OneDrive](https://yuzuai-my.sharepoint.com/:u:/g/personal/yuzuchan_yuzuai_onmicrosoft_com/EaS3jPYdMwxGiU3V_V64nRIBk6QA5Gdhs2TkJQ2bLssxbw?e=Mm6cWY)或者[私人云盘](https://share.yuzuchan.moe/d/aria/Resource.zip?sign=LOqwqDVm95dYnkEDYKX2E-VGj0xc_JxrsFnuR1BcvtI=:0)下载文件，把解压后的`static`文件夹移动至本程序目录下。
@@ -30,6 +30,14 @@ pip install -r requirements.txt
 在`output`文件夹中，查看输出的B50。[图片数据不对...](#图片数据错误) | [没生成图片...](#图片未生成)
 
 ## 疑难解答
+
+### 非发布版
+
+目前此仓库仅仅是一个`Python`脚本，因此你可以`git clone`此仓库，以直接使用最新的非发布版本。  
+直接对此仓库施行`git clone`后请将`b50.py`中`WIP = True`改为`WIP = False`，以禁用未完成并会可能引起错误的特性，除非你是有意想测试/完善此特性。详见[开发中特性](#开发中特性)。
+
+>[!WARNING]
+>**非发布版的稳定性无法保证。** 当然，我们也无法保证发布版一定能100%无差错地运行，但是非发布版的问题总体更多，发生问题的概率总体更高。
 
 ### `pip`运行失败
 
@@ -68,6 +76,10 @@ py ./b50.py
 - **如果出现类似[此处](#pip运行失败)的报错，请参见相应的解决方案。**
 - **如果上述方法均无效，请截屏并[提交 issue](https://github.com/nhdsd/maimai-b50-image-generator/issues/new)。**
 
+## 开发中特性
+
+- 自定义头像与姓名框。
+
 ## 致谢
 
 本项目的实现离不开：
@@ -77,4 +89,4 @@ py ./b50.py
 
 ## 许可证
 
-此项目使用MIT许可证。
+此项目使用[**MIT**许可证](./LICENSE)。

@@ -15,6 +15,9 @@ from aiohttp import ClientSession, ClientTimeout
 from pydantic import BaseModel, Field
 import aiofiles
 
+WIP = True
+"""Work in Progress 指示器"""
+
 # maimaidx_error.py
 class UserNotFoundError(Exception):
     """未找到玩家"""
@@ -163,7 +166,6 @@ class PlayInfoDev(PlayInfo):
 
 
 # tool.py
-
 async def openfile(file: Path) -> Union[dict, list]:
     """异步IO读取文件"""
     async with aiofiles.open(file, 'r', encoding='utf-8') as f:
@@ -652,7 +654,7 @@ class DrawBest(ScoreBaseImage):
             num = f'{self.add_rating + 1:02d}'
         return f'UI_DNM_DaniPlate_{num}.png'
 
-    async def draw(self) -> Image.Image:
+    async def draw(self, avatar: Optional[str] = None) -> Image.Image:
         """异步绘制"""
         logo = Image.open(maimaidir / 'logo.png').resize((249, 120))
         dx_rating = Image.open(maimaidir / self._find_rating_picture()).resize((186, 35))
@@ -667,7 +669,22 @@ class DrawBest(ScoreBaseImage):
         else:
             plate = Image.open(maimaidir / 'UI_Plate_300501.png').resize((800, 130))
         self._im.alpha_composite(plate, (300, 60))
-        icon = Image.open(maimaidir / 'UI_Icon_309503.png').resize((120, 120))
+        if WIP:
+            try:
+                if avatar is not None:
+                    icon = Image.open(root / avatar).convert("RGBA")
+                else:
+                    icon = Image.open(maimaidir / 'UI_Icon_309503.png')
+            except FileNotFoundError:
+                print(f"无法找到头像{avatar}，将用默认头像代替。")
+                icon = Image.open(maimaidir / 'UI_Icon_309503.png')
+            else:
+                if icon.size[0] != icon.size[1]:
+                    print(f"头像成功加载，但是其分辨率为{icon.size[0]}x{icon.size[1]}，不是正方形，显示效果可能与预期不符。")
+            finally:
+                icon = icon.resize((120, 120))
+        else:
+            icon = Image.open(maimaidir / 'UI_Icon_309503.png').resize((120, 120))
         self._im.alpha_composite(icon, (305, 65))
         self._im.alpha_composite(dx_rating, (435, 72))
         rating_value = f'{self.rating:05d}'
@@ -760,7 +777,7 @@ def change_column_width(s: str, length: int) -> str:
     return ''.join(s_list)
 
 
-async def generate(username: Optional[str] = None) -> str:
+async def generate(username: Optional[str] = None, avatar: Optional[str] = None) -> str:
     """生成主函数"""
     obj = await maiApi.query_user(username)
 
@@ -768,7 +785,7 @@ async def generate(username: Optional[str] = None) -> str:
     draw_best = DrawBest(mai_info)
 
     try:
-        pic = await draw_best.draw()
+        pic = await draw_best.draw(avatar)
         path = OUTPUT + (datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.png')
         pic.save(path, "PNG")
     except Exception: # pylint: disable=broad-exception-caught
@@ -777,13 +794,27 @@ async def generate(username: Optional[str] = None) -> str:
 
 
 if __name__ == '__main__':
-    user_path : Path = root / 'user.txt'
-    if not os.path.exists(user_path):
-        target_username = input('请输入Diving-Fish查分器网站用户名：')
-        with open(user_path,'w+',encoding='utf-8') as user:
-            user.write(target_username)
-    with open(user_path,'r',encoding='utf-8') as user:
-        target_username = user.read()
+    config_path : Path = root / 'config.json'
+    if not os.path.exists(config_path):
+        c_username = input('请输入Diving-Fish查分器网站用户名：')
+        with open(config_path,'w+',encoding='utf-8') as user:
+            json.dump({'username': c_username}, user, ensure_ascii=False, indent=4)
+    with open(config_path,'r',encoding='utf-8') as user:
+        config = json.load(user)
+    try:
+        c_username = config['username']
+    except KeyError:
+        c_username = input('请输入Diving-Fish查分器网站用户名：')
+        config['username'] = c_username
+        with open(config_path,'w',encoding='utf-8') as user:
+            json.dump(config, user, ensure_ascii=False, indent=4)
+    try:
+        c_icon = config['icon']
+    except KeyError:
+        c_icon = None # pylint: disable=invalid-name
     print('开始生成B50')
-    result = asyncio.run(generate(username=target_username))
+    if WIP:
+        result = asyncio.run(generate(username=c_username, avatar=c_icon))
+    else:
+        result = asyncio.run(generate(username=c_username))
     print(result)
