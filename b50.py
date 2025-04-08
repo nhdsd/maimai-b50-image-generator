@@ -1,6 +1,7 @@
 """maimaiDX B50生成器"""
 
 import json
+import time
 import datetime
 import os
 import asyncio
@@ -18,6 +19,7 @@ import aiofiles
 WIP = True
 """Work in Progress 指示器"""
 
+START = time.time() if WIP else None
 # maimaidx_error.py
 class UserNotFoundError(Exception):
     """未找到玩家"""
@@ -264,6 +266,7 @@ class MaimaiAPI:
         post_data = {}
         post_data['username'] = username
         post_data['b50'] = True
+        print("正在与服务器通信...(获取游玩信息)")
         return await self._request('POST', self.MaiProxyAPI + '/query/player', json=post_data)
 
     async def transfer_music(self):
@@ -312,6 +315,7 @@ class MusicList(List[Music]):
 async def get_music_list() -> MusicList:
     """获取所有数据"""
     # MusicData
+    print("正在与服务器通信...(获取曲目信息)")
     try:
         try:
             music_data = await maiApi.music_data()
@@ -334,6 +338,7 @@ async def get_music_list() -> MusicList:
         )
         raise
     # ChartStats
+    print("正在与服务器通信...(获取谱面信息)")
     try:
         try:
             chart_stats = await maiApi.chart_stats()
@@ -654,7 +659,12 @@ class DrawBest(ScoreBaseImage):
             num = f'{self.add_rating + 1:02d}'
         return f'UI_DNM_DaniPlate_{num}.png'
 
-    async def draw(self, avatar: Optional[str] = None) -> Image.Image:
+    # pylint: disable-next=too-many-locals, too-many-branches, too-many-statements
+    async def draw(
+            self,
+            icon_name: Optional[str] = None,
+            plate_name: Optional[str] = None
+        ) -> Image.Image:
         """异步绘制"""
         logo = Image.open(maimaidir / 'logo.png').resize((249, 120))
         dx_rating = Image.open(maimaidir / self._find_rating_picture()).resize((186, 35))
@@ -666,21 +676,35 @@ class DrawBest(ScoreBaseImage):
         self._im.alpha_composite(logo, (14, 60))
         if self.plate:
             plate = Image.open(platedir / f'{self.plate}.png').resize((800, 130))
+            if WIP and plate_name is not None:
+                print("由于有牌子，姓名框设置已被覆盖。")
+        elif WIP:
+            try:
+                plate = Image.open(root / plate_name).convert("RGBA")
+            except FileNotFoundError:
+                print(f"无法找到姓名框{plate_name}，将用默认姓名框代替。")
+                plate = Image.open(maimaidir / 'UI_Plate_300501.png')
+            else:
+                if (abs(130*plate.size[0] - 800*plate.size[1]) >
+                    min(13*plate.size[0],80*plate.size[1])):
+                    print("姓名框成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
+            finally:
+                plate = plate.resize((800, 130))
         else:
             plate = Image.open(maimaidir / 'UI_Plate_300501.png').resize((800, 130))
         self._im.alpha_composite(plate, (300, 60))
         if WIP:
             try:
-                if avatar is not None:
-                    icon = Image.open(root / avatar).convert("RGBA")
+                if icon_name is not None:
+                    icon = Image.open(root / icon_name).convert("RGBA")
                 else:
                     icon = Image.open(maimaidir / 'UI_Icon_309503.png')
             except FileNotFoundError:
-                print(f"无法找到头像{avatar}，将用默认头像代替。")
+                print(f"无法找到头像{icon_name}，将用默认头像代替。")
                 icon = Image.open(maimaidir / 'UI_Icon_309503.png')
             else:
-                if icon.size[0] != icon.size[1]:
-                    print(f"头像成功加载，但是其分辨率为{icon.size[0]}x{icon.size[1]}，不是正方形，显示效果可能与预期不符。")
+                if 10 * abs(icon.size[0] - icon.size[1]) > min(icon.size[0], icon.size[1]):
+                    print("头像成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
             finally:
                 icon = icon.resize((120, 120))
         else:
@@ -777,7 +801,11 @@ def change_column_width(s: str, length: int) -> str:
     return ''.join(s_list)
 
 
-async def generate(username: Optional[str] = None, avatar: Optional[str] = None) -> str:
+async def generate(
+        username: Optional[str] = None,
+        icon: Optional[str] = None,
+        plate: Optional[str] = None
+    ) -> str:
     """生成主函数"""
     obj = await maiApi.query_user(username)
 
@@ -785,7 +813,7 @@ async def generate(username: Optional[str] = None, avatar: Optional[str] = None)
     draw_best = DrawBest(mai_info)
 
     try:
-        pic = await draw_best.draw(avatar)
+        pic = await draw_best.draw(icon, plate)
         path = OUTPUT + (datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S') + '.png')
         pic.save(path, "PNG")
     except Exception: # pylint: disable=broad-exception-caught
@@ -794,27 +822,47 @@ async def generate(username: Optional[str] = None, avatar: Optional[str] = None)
 
 
 if __name__ == '__main__':
-    config_path : Path = root / 'config.json'
-    if not os.path.exists(config_path):
-        c_username = input('请输入Diving-Fish查分器网站用户名：')
-        with open(config_path,'w+',encoding='utf-8') as user:
-            json.dump({'username': c_username}, user, ensure_ascii=False, indent=4)
-    with open(config_path,'r',encoding='utf-8') as user:
-        config = json.load(user)
-    try:
-        c_username = config['username']
-    except KeyError:
-        c_username = input('请输入Diving-Fish查分器网站用户名：')
-        config['username'] = c_username
-        with open(config_path,'w',encoding='utf-8') as user:
-            json.dump(config, user, ensure_ascii=False, indent=4)
-    try:
-        c_icon = config['icon']
-    except KeyError:
-        c_icon = None # pylint: disable=invalid-name
-    print('开始生成B50')
     if WIP:
-        result = asyncio.run(generate(username=c_username, avatar=c_icon))
+        config_path : Path = root / 'config.json'
+        if not os.path.exists(config_path):
+            try:
+                with open("user.txt", 'r', encoding='utf-8') as user:
+                    c_username = user.read()
+                print('从user.txt读取用户名的API已经弃用，配置已经被转换为config.json。阅读README了解更多。')
+            except FileNotFoundError:
+                c_username = input('请输入Diving-Fish查分器网站用户名：')
+            finally:
+                with open(config_path,'w+',encoding='utf-8') as config_f:
+                    json.dump({'username': c_username}, config_f, ensure_ascii=False, indent=4)
+        with open(config_path,'r',encoding='utf-8') as config_f:
+            config = json.load(config_f)
+        try:
+            c_username = config['username']
+        except KeyError:
+            c_username = input('请输入Diving-Fish查分器网站用户名：')
+            config['username'] = c_username
+            with open(config_path,'w',encoding='utf-8') as config_f:
+                json.dump(config, config_f, ensure_ascii=False, indent=4)
+        try:
+            c_icon = config['icon']
+        except KeyError:
+            c_icon = None # pylint: disable=invalid-name
+        try:
+            c_plate = config['plate']
+        except KeyError:
+            c_plate = None # pylint: disable=invalid-name
+        print('开始生成B50')
+        result = asyncio.run(generate(username=c_username, icon=c_icon, plate = c_plate))
+        print(result)
+        print(f'生成耗时{round(time.time() - START, 3)}秒。')
     else:
-        result = asyncio.run(generate(username=c_username))
-    print(result)
+        user_path : Path = root / 'user.txt'
+        if not os.path.exists(user_path):
+            target_username = input('请输入Diving-Fish查分器网站用户名：')
+            with open(user_path,'w+',encoding='utf-8') as user:
+                user.write(target_username)
+        with open(user_path,'r',encoding='utf-8') as user:
+            target_username = user.read()
+        print('开始生成B50')
+        result = asyncio.run(generate(username=target_username))
+        print(result)
