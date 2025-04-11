@@ -5,9 +5,8 @@ from typing import List, Optional, Union, Any
 import asyncio
 import traceback
 from pathlib import Path
-
 from aiohttp import ClientSession, ClientTimeout
-from .models import Music
+from .models import Music, UserInfo
 from .consts import music_file, chart_file, coverdir
 from .tools import openfile, writefile
 from .errors import (
@@ -70,7 +69,7 @@ class MaimaiAPI:
         post_data = {}
         post_data['username'] = username
         post_data['b50'] = True
-        print("正在与服务器通信...(获取游玩信息)")
+        print("[INFO]正在与服务器通信...(获取游玩信息)")
         return await self._request('POST', self.MaiProxyAPI + '/query/player', json=post_data)
 
     async def transfer_music(self):
@@ -102,10 +101,8 @@ class MaimaiAPI:
         except Exception: # pylint: disable=broad-exception-caught
             return coverdir / '11000.png'
 
-maiApi = MaimaiAPI()
+mai_api = MaimaiAPI()
 
-
-# maimaidx_music.py
 class MusicList(List[Music]):
     """曲目列表类"""
     def by_id(self, music_id: Union[str, int]) -> Optional[Music]:
@@ -119,48 +116,48 @@ class MusicList(List[Music]):
 async def get_music_list() -> MusicList:
     """获取所有数据"""
     # MusicData
-    print("正在与服务器通信...(获取曲目信息)")
+    print("[INFO]正在与服务器通信...(获取曲目信息)")
     try:
         try:
-            music_data = await maiApi.music_data()
+            music_data = await mai_api.music_data()
             await writefile(music_file, music_data)
         except asyncio.exceptions.TimeoutError:
-            print('从diving-fish获取maimaiDX曲目数据超时，正在使用yuzuapi中转获取曲目数据')
-            music_data = await maiApi.transfer_music()
+            print('[ERROR]从diving-fish获取maimaiDX曲目数据超时，正在使用yuzuapi中转获取曲目数据')
+            music_data = await mai_api.transfer_music()
             await writefile(music_file, music_data)
         except UnknownError:
-            print('从diving-fish获取maimaiDX曲目数据失败，请检查网络环境。已切换至本地暂存文件')
+            print('[ERROE]从diving-fish获取maimaiDX曲目数据失败，请检查网络环境。已切换至本地暂存文件')
             music_data = await openfile(music_file)
         except Exception: # pylint: disable=broad-exception-caught
-            print(f'Error: {traceback.format_exc()}')
-            print('maimaiDX曲目数据获取失败，请检查网络环境。已切换至本地暂存文件')
+            print(f'[ERROR]Error: {traceback.format_exc()}')
+            print('[ERROR]maimaiDX曲目数据获取失败，请检查网络环境。已切换至本地暂存文件')
             music_data = await openfile(music_file)
     except FileNotFoundError:
         print(
-            '未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/music_data" '
+            '[FATAL]未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/music_data" '
             '将内容保存为 "music_data.json" 存放在 "static" 目录下并重启此工具'
         )
         raise
     # ChartStats
-    print("正在与服务器通信...(获取谱面信息)")
+    print("[INFO]正在与服务器通信...(获取谱面信息)")
     try:
         try:
-            chart_stats = await maiApi.chart_stats()
+            chart_stats = await mai_api.chart_stats()
             await writefile(chart_file, chart_stats)
         except asyncio.exceptions.TimeoutError:
-            print('从diving-fish获取maimaiDX数据获取超时，正在使用yuzuapi中转获取单曲数据')
-            chart_stats = await maiApi.transfer_chart()
+            print('[ERROR]从diving-fish获取maimaiDX数据获取超时，正在使用yuzuapi中转获取单曲数据')
+            chart_stats = await mai_api.transfer_chart()
             await writefile(chart_file, chart_stats)
         except UnknownError:
-            print('从diving-fish获取maimaiDX单曲数据获取错误。已切换至本地暂存文件')
+            print('[ERROR]从diving-fish获取maimaiDX单曲数据获取错误。已切换至本地暂存文件')
             chart_stats = await openfile(chart_file)
         except Exception: # pylint: disable=broad-exception-caught
-            print(f'Error: {traceback.format_exc()}')
+            print(f'[ERROR]Error: {traceback.format_exc()}')
             print('maimaiDX数据获取错误，请检查网络环境。已切换至本地暂存文件')
             chart_stats = await openfile(chart_file)
     except FileNotFoundError:
         print(
-            '未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/chart_stats" '
+            '[FATAL]未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/chart_stats" '
             '将内容保存为 "chart_stats.json" 存放在 "static" 目录下并重启此工具'
         )
         raise
@@ -175,3 +172,7 @@ async def get_music_list() -> MusicList:
         total_list.append(Music(stats=_stats, **music))
 
     return total_list
+
+async def get_user_info(username: str) -> Optional[dict]:
+    """获取用户信息"""
+    return UserInfo(**(await mai_api.query_user(username)))

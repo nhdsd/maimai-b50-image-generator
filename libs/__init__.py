@@ -1,7 +1,11 @@
+# pylint:disable=wrong-import-position
 """库文件"""
-__all__ = ["UserInfo", "OUTPUT", "user_config", "MaimaiAPI", "DrawBest"]
+__all__ = ["START", "OUTPUT", "get_user_info", "DrawBest", "load_config"]
 
-from .models import UserInfo
-from .consts import OUTPUT, user_config
-from .api import MaimaiAPI
+import time
+START = time.time()
+
+from .consts import OUTPUT
+from .api import get_user_info
 from .image import DrawBest
+from .config import load_config

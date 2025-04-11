@@ -11,6 +11,7 @@ from .consts import (
     root, maimaidir, platedir, coverdir, SIYUAN, TBFONT, fcl, fsl, score_rank_l
 )
 from .api import get_music_list
+from .tools import dx_score, coloum_width, change_column_width
 
 music_list = asyncio.run(get_music_list())
 # pylint: disable-next=too-few-public-methods
@@ -21,38 +22,28 @@ class DrawText:
         self._font = str(font)
 
     #pylint: disable-next=too-many-arguments, too-many-positional-arguments
-    def draw(self,
-             pos_x: int,
-             pos_y: int,
-             size: int,
-             text: Union[str, int, float],
-             color: Tuple[int, int, int, int] = (255, 255, 255, 255),
-             anchor: str = 'lt',
-             stroke_width: int = 0,
-             stroke_fill: Tuple[int, int, int, int] = (0, 0, 0, 0),
-             multiline: bool = False):
+    def draw(
+        self,
+        pos_x: int,
+        pos_y: int,
+        size: int,
+        text: Union[str, int, float],
+        color: Tuple[int, int, int, int] = (255, 255, 255, 255),
+        anchor: str = 'lt',
+        stroke_width: int = 0,
+        stroke_fill: Tuple[int, int, int, int] = (0, 0, 0, 0)
+    ):
         """绘图主方法"""
         font = ImageFont.truetype(self._font, size)
-        if multiline:
-            self._img.multiline_text(
-                (pos_x, pos_y),
-                str(text),
-                color,
-                font,
-                anchor,
-                stroke_width=stroke_width,
-                stroke_fill=stroke_fill
-            )
-        else:
-            self._img.text(
-                (pos_x, pos_y),
-                str(text),
-                color,
-                font,
-                anchor,
-                stroke_width=stroke_width,
-                stroke_fill=stroke_fill
-            )
+        self._img.text(
+            (pos_x, pos_y),
+            str(text),
+            color,
+            font,
+            anchor,
+            stroke_width=stroke_width,
+            stroke_fill=stroke_fill
+        )
 
 
 def music_picture(music_id: Union[int, str]) -> Path:
@@ -72,7 +63,7 @@ def music_picture(music_id: Union[int, str]) -> Path:
         if (_path := coverdir / f'{music_id}.png').exists():
             return _path
     if 1000 < music_id < 10000 or 10000 < music_id <= 11000:
-        for _id in [music_id + 10000, music_id - 10000]:
+        for _id in (music_id + 10000, music_id - 10000):
             if (_path := coverdir / f'{_id}.png').exists():
                 return _path
     return coverdir / '11000.png'
@@ -370,63 +361,3 @@ class DrawBest(ScoreBaseImage):
         self.whiledraw(self.dx_best, False)
 
         return self._im
-
-
-def dx_score(dx: int) -> int:
-    """
-    获取DX评分星星数量
-
-    Params:
-        `dx`: dx百分比
-    Returns:
-        `int` 返回星星数量
-    """
-    if dx <= 85:
-        star_count = 0
-    elif dx <= 90:
-        star_count = 1
-    elif dx <= 93:
-        star_count = 2
-    elif dx <= 95:
-        star_count = 3
-    elif dx <= 97:
-        star_count = 4
-    else:
-        star_count = 5
-    return star_count
-
-
-def get_char_width(o: int) -> int:
-    """字符宽度"""
-    widths = [
-        (126, 1), (159, 0), (687, 1), (710, 0), (711, 1), (727, 0), (733, 1), (879, 0), (1154, 1),
-        (1161, 0), (4347, 1), (4447, 2), (7467, 1), (7521, 0), (8369, 1), (8426, 0), (9000, 1),
-        (9002, 2), (11021, 1), (12350, 2), (12351, 1), (12438, 2), (12442, 0), (19893, 2),
-        (19967, 1), (55203, 2), (63743, 1), (64106, 2), (65039, 1), (65059, 0), (65131, 2),
-        (65279, 1), (65376, 2), (65500, 1), (65510, 2), (120831, 1), (262141, 2), (1114109, 1)
-    ]
-    if o in {0xe, 0xf}:
-        return 0
-    for num, wid in widths:
-        if o <= num:
-            return wid
-    return 1
-
-
-def coloum_width(s: str) -> int:
-    """列宽"""
-    res = 0
-    for ch in s:
-        res += get_char_width(ord(ch))
-    return res
-
-
-def change_column_width(s: str, length: int) -> str:
-    """调整列宽"""
-    res = 0
-    s_list = []
-    for ch in s:
-        res += get_char_width(ord(ch))
-        if res <= length:
-            s_list.append(ch)
-    return ''.join(s_list)

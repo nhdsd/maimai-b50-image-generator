@@ -4,7 +4,7 @@ import os
 from typing import Dict
 
 # 文件路径
-root: Path = Path(__file__).parent
+root: Path = Path(__file__).parent.parent
 static: Path = root / 'static'
 OUTPUT = './output/'
 if not os.path.exists(OUTPUT):
