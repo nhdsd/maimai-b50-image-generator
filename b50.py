@@ -16,10 +16,7 @@ from aiohttp import ClientSession, ClientTimeout
 from pydantic import BaseModel, Field
 import aiofiles
 
-WIP = True
-"""Work in Progress 指示器"""
-
-START = time.time() if WIP else None
+START = time.time()
 # maimaidx_error.py
 class UserNotFoundError(Exception):
     """未找到玩家"""
@@ -676,9 +673,9 @@ class DrawBest(ScoreBaseImage):
         self._im.alpha_composite(logo, (14, 60))
         if self.plate:
             plate = Image.open(platedir / f'{self.plate}.png').resize((800, 130))
-            if WIP and plate_name is not None:
+            if plate_name is not None:
                 print("由于有牌子，姓名框设置已被覆盖。")
-        elif WIP:
+        else:
             try:
                 plate = Image.open(root / plate_name).convert("RGBA")
             except FileNotFoundError:
@@ -690,25 +687,20 @@ class DrawBest(ScoreBaseImage):
                     print("姓名框成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
             finally:
                 plate = plate.resize((800, 130))
-        else:
-            plate = Image.open(maimaidir / 'UI_Plate_300501.png').resize((800, 130))
         self._im.alpha_composite(plate, (300, 60))
-        if WIP:
-            try:
-                if icon_name is not None:
-                    icon = Image.open(root / icon_name).convert("RGBA")
-                else:
-                    icon = Image.open(maimaidir / 'UI_Icon_309503.png')
-            except FileNotFoundError:
-                print(f"无法找到头像{icon_name}，将用默认头像代替。")
-                icon = Image.open(maimaidir / 'UI_Icon_309503.png')
+        try:
+            if icon_name is not None:
+                icon = Image.open(root / icon_name).convert("RGBA")
             else:
-                if 10 * abs(icon.size[0] - icon.size[1]) > min(icon.size[0], icon.size[1]):
-                    print("头像成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
-            finally:
-                icon = icon.resize((120, 120))
+                icon = Image.open(maimaidir / 'UI_Icon_309503.png')
+        except FileNotFoundError:
+            print(f"无法找到头像{icon_name}，将用默认头像代替。")
+            icon = Image.open(maimaidir / 'UI_Icon_309503.png')
         else:
-            icon = Image.open(maimaidir / 'UI_Icon_309503.png').resize((120, 120))
+            if 10 * abs(icon.size[0] - icon.size[1]) > min(icon.size[0], icon.size[1]):
+                print("头像成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
+        finally:
+            icon = icon.resize((120, 120))
         self._im.alpha_composite(icon, (305, 65))
         self._im.alpha_composite(dx_rating, (435, 72))
         rating_value = f'{self.rating:05d}'
@@ -822,47 +814,35 @@ async def generate(
 
 
 if __name__ == '__main__':
-    if WIP:
-        config_path : Path = root / 'config.json'
-        if not os.path.exists(config_path):
-            try:
-                with open("user.txt", 'r', encoding='utf-8') as user:
-                    c_username = user.read()
-                print('从user.txt读取用户名的API已经弃用，配置已经被转换为config.json。阅读README了解更多。')
-            except FileNotFoundError:
-                c_username = input('请输入Diving-Fish查分器网站用户名：')
-            finally:
-                with open(config_path,'w+',encoding='utf-8') as config_f:
-                    json.dump({'username': c_username}, config_f, ensure_ascii=False, indent=4)
-        with open(config_path,'r',encoding='utf-8') as config_f:
-            config = json.load(config_f)
+    config_path : Path = root / 'config.json'
+    if not os.path.exists(config_path):
         try:
-            c_username = config['username']
-        except KeyError:
+            with open("user.txt", 'r', encoding='utf-8') as user:
+                c_username = user.read()
+            print('从user.txt读取用户名的API已经弃用，配置已经被转换为config.json。阅读README了解更多。')
+        except FileNotFoundError:
             c_username = input('请输入Diving-Fish查分器网站用户名：')
-            config['username'] = c_username
-            with open(config_path,'w',encoding='utf-8') as config_f:
-                json.dump(config, config_f, ensure_ascii=False, indent=4)
-        try:
-            c_icon = config['icon']
-        except KeyError:
-            c_icon = None # pylint: disable=invalid-name
-        try:
-            c_plate = config['plate']
-        except KeyError:
-            c_plate = None # pylint: disable=invalid-name
-        print('开始生成B50')
-        result = asyncio.run(generate(username=c_username, icon=c_icon, plate = c_plate))
-        print(result)
-        print(f'生成耗时{round(time.time() - START, 3)}秒。')
-    else:
-        user_path : Path = root / 'user.txt'
-        if not os.path.exists(user_path):
-            target_username = input('请输入Diving-Fish查分器网站用户名：')
-            with open(user_path,'w+',encoding='utf-8') as user:
-                user.write(target_username)
-        with open(user_path,'r',encoding='utf-8') as user:
-            target_username = user.read()
-        print('开始生成B50')
-        result = asyncio.run(generate(username=target_username))
-        print(result)
+        finally:
+            with open(config_path,'w+',encoding='utf-8') as config_f:
+                json.dump({'username': c_username}, config_f, ensure_ascii=False, indent=4)
+    with open(config_path,'r',encoding='utf-8') as config_f:
+        config = json.load(config_f)
+    try:
+        c_username = config['username']
+    except KeyError:
+        c_username = input('请输入Diving-Fish查分器网站用户名：')
+        config['username'] = c_username
+        with open(config_path,'w',encoding='utf-8') as config_f:
+            json.dump(config, config_f, ensure_ascii=False, indent=4)
+    try:
+        c_icon = config['icon']
+    except KeyError:
+        c_icon = None # pylint: disable=invalid-name
+    try:
+        c_plate = config['plate']
+    except KeyError:
+        c_plate = None # pylint: disable=invalid-name
+    print('开始生成B50')
+    result = asyncio.run(generate(username=c_username, icon=c_icon, plate = c_plate))
+    print(result)
+    print(f'生成耗时{round(time.time() - START, 3)}秒。')

@@ -31,7 +31,6 @@ pip install -r requirements.txt
 
 ---
 
-> [!NOTE]
 > 以下步骤为可选的。
 
 ### 7 自定义头像与姓名框
@@ -106,7 +105,6 @@ py ./b50.py
 
 ## 开发中特性
 
-- ~~自定义头像与姓名框。~~(已完成，`v1.1.0-rc1`测试中)
 - 重构代码。
 
 ## 致谢
@@ -122,22 +120,4 @@ py ./b50.py
 
 ## 版本日志
 
-### [v1.1.0-rc1](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.1.0-rc1) (Pre-release) (20250408)
-
-**新功能**
-- 自定义头像与姓名框\*
-- 新的配置方式\*
-- 生成计时\*
-- 网络IO提示
-
-**带有\*的功能可以被`WIP`标识关闭。**
-
-> [!WARNING]
-> **自此版本起标记为弃用的功能：**
-> - 自`user.txt`读取配置
-> 
-> 根据Semver规范，这些功能将在`2.0.0`版本中彻底删除。
-
-### [v1.0.0](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.0.0) (20250407)
-
-- 基本功能实现
+参见[此处](./changelog.md)。
