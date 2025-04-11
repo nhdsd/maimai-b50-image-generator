@@ -1,0 +1,33 @@
+"""常用常量"""
+from pathlib import Path
+import os
+from typing import Dict
+
+# 文件路径
+root: Path = Path(__file__).parent
+static: Path = root / 'static'
+OUTPUT = './output/'
+if not os.path.exists(OUTPUT):
+    os.mkdir(OUTPUT)
+user_config : Path = root / 'config.json'
+config_json: Path = static / 'config.json'
+music_file: Path = static / 'music_data.json'
+chart_file: Path = static / 'music_chart.json'
+
+# 静态资源路径
+maimaidir: Path = static / 'mai' / 'pic'
+coverdir: Path = static / 'mai' / 'cover'
+platedir: Path = static / 'mai' / 'plate'
+
+# 字体路径
+MEIRYO: Path = static / 'ShangguMonoSC-Regular.otf'
+SIYUAN: Path = static / 'ResourceHanRoundedCN-Bold.ttf'
+TBFONT: Path = static / 'Torus SemiBold.otf'
+
+# 常用变量
+score_rank_l: Dict[str, str] = {'d': 'D', 'c': 'C', 'b': 'B', 'bb': 'BB', 'bbb': 'BBB', 'a': 'A',
+                                'aa': 'AA','aaa': 'AAA', 's': 'S', 'sp': 'Sp', 'ss': 'SS',
+                                'ssp': 'SSp', 'sss': 'SSS', 'sssp': 'SSSp'}
+fcl: Dict[str, str] = {'fc': 'FC', 'fcp': 'FCp', 'ap': 'AP', 'app': 'APp'}
+fsl: Dict[str, str] = {'fs': 'FS', 'fsp': 'FSp', 'fsd': 'FSD', 'fdx': 'FSD', 'fsdp': 'FSDp',
+                       'fdxp': 'FSDp', 'sync': 'Sync'}
