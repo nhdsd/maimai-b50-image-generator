@@ -14,7 +14,7 @@
 在[Release](https://github.com/nhdsd/maimai-b50-image-generator/releases)处下载最新版本。[从最新commit构建...](#非发布版) | [预发布版...](#预发布版)
 
 ### 3 下载资源文件
-在[OneDrive](https://1drv.ms/u/c/68dff5f977fb346f/EX_PkI8HREtHgI6Fyh1fy14BNFor-yevkQ314XCw9wRV3w?e=k7VWuB)处下载基础资源文件，
+在[OneDrive](https://1drv.ms/u/c/68dff5f977fb346f/EasYNIMQBYlMsJFdviOkQfkBY7lDnkbooSRIxhd2ABxYIw?e=lYwnxL)处下载基础资源文件，
 然后把`static`文件夹复制到程序根目录下。
 
 ### 4 安装依赖
@@ -41,7 +41,8 @@ pip install -r requirements.txt
 用任意的文本编辑器打开`config.json`即可修改。[修改`config.json`...](#配置文件) | [配置文件的格式...](#JSON文件)
 
 ### 9 使用附加包提供的头像与姓名框
-附加包提供了一些常见的头像与姓名框。在[OneDrive]
+附加包提供了一些常见的头像与姓名框。在[OneDrive](https://1drv.ms/u/c/68dff5f977fb346f/EX_PkI8HREtHgI6Fyh1fy14BNFor-yevkQ314XCw9wRV3w?e=k7VWuB)处下载后
+把`static`文件夹复制到程序根目录处与原有的文件夹合并即可。附加包中的头像与姓名框的编号为文件名中的数字，不含前导零。
 
 ## 帮助 & 疑难解答
 
