@@ -87,30 +87,3 @@ class UserInfo(BaseModel):
     plate: Optional[str] = None
     rating: Optional[int]
     username: Optional[str]
-
-
-##### PlayedInfo
-class PlayInfo(BaseModel):
-    """游玩信息"""
-    achievements: float
-    fc: str = ''
-    fs: str = ''
-    level: str
-    level_index: int
-    title: str
-    type: str
-    ds: float = 0
-    dxScore: int = 0
-    ra: int = 0
-    rate: str = ''
-
-
-class PlayInfoDefault(PlayInfo):
-    """游玩信息默认值"""
-    song_id: int = Field(alias='id')
-
-
-class PlayInfoDev(PlayInfo):
-    """游玩信息(内部值)"""
-    level_label: str
-    song_id: int

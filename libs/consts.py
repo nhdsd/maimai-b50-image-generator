@@ -17,12 +17,13 @@ chart_file: Path = static / 'music_chart.json'
 # 静态资源路径
 maimaidir: Path = static / 'mai' / 'pic'
 coverdir: Path = static / 'mai' / 'cover'
+customdir: Path = root / 'custom'
+icondir: Path = static / 'mai' / 'icon'
 platedir: Path = static / 'mai' / 'plate'
 
 # 字体路径
-MEIRYO: Path = static / 'ShangguMonoSC-Regular.otf'
-SIYUAN: Path = static / 'ResourceHanRoundedCN-Bold.ttf'
-TBFONT: Path = static / 'Torus SemiBold.otf'
+HAN: Path = static / 'ResourceHanRoundedCN-Bold.ttf'
+TORUS: Path = static / 'Torus SemiBold.otf'
 
 # 常用变量
 score_rank_l: Dict[str, str] = {'d': 'D', 'c': 'C', 'b': 'B', 'bb': 'BB', 'bbb': 'BBB', 'a': 'A',

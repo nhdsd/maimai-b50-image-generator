@@ -1,19 +1,19 @@
 """图像生成相关"""
 
 from pathlib import Path
-from typing import List, Optional, Union, Tuple
-import asyncio
+from typing import List, Union, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-from .models import ChartInfo, PlayInfoDefault, PlayInfoDev, UserInfo
+from .models import ChartInfo, UserInfo
 from .consts import (
-    root, maimaidir, platedir, coverdir, SIYUAN, TBFONT, fcl, fsl, score_rank_l
+    root, customdir, maimaidir, icondir, platedir, coverdir, HAN, TORUS, fcl, fsl, score_rank_l
 )
-from .api import get_music_list
-from .tools import dx_score, coloum_width, change_column_width
+from .api import MusicList
+from .tools import dx_score, coloum_width, change_column_width, plate_finder
+from .config import Config
 
-music_list = asyncio.run(get_music_list())
+
 # pylint: disable-next=too-few-public-methods
 class DrawText:
     """文字绘制类"""
@@ -68,6 +68,7 @@ def music_picture(music_id: Union[int, str]) -> Path:
                 return _path
     return coverdir / '11000.png'
 
+# pylint: disable-next=too-few-public-methods
 class ScoreBaseImage:
     """基本分数绘制类"""
     _diff = [
@@ -76,13 +77,6 @@ class ScoreBaseImage:
         Image.open(maimaidir / 'b50_score_expert.png'),
         Image.open(maimaidir / 'b50_score_master.png'),
         Image.open(maimaidir / 'b50_score_remaster.png')
-    ]
-    _rise = [
-        Image.open(maimaidir / 'rise_score_basic.png'),
-        Image.open(maimaidir / 'rise_score_advanced.png'),
-        Image.open(maimaidir / 'rise_score_expert.png'),
-        Image.open(maimaidir / 'rise_score_master.png'),
-        Image.open(maimaidir / 'rise_score_remaster.png')
     ]
     text_color = (124, 129, 255, 255)
     t_color = [
@@ -99,38 +93,20 @@ class ScoreBaseImage:
         (159, 81, 220, 255),
         (138, 0, 226, 255)
     ]
-    bg_color = [
-        (111, 212, 61, 255),
-        (248, 183, 9, 255),
-        (255, 129, 141, 255),
-        (159, 81, 220, 255),
-        (219, 170, 255, 255)
-    ]
-    id_diff = [Image.new('RGBA', (55, 10), color) for color in bg_color]
-
-    title_bg = Image.open(maimaidir / 'title.png')
-    title_lengthen_bg = Image.open(maimaidir / 'title-lengthen.png')
-    design_bg = Image.open(maimaidir / 'design.png')
-    aurora_bg = Image.open(maimaidir / 'aurora.png').convert('RGBA').resize((1400, 220))
-    shines_bg = Image.open(maimaidir / 'bg_shines.png').convert('RGBA')
-    pattern_bg = Image.open(maimaidir / 'pattern.png')
-    rainbow_bg = Image.open(maimaidir / 'rainbow.png').convert('RGBA')
-    rainbow_bottom_bg = Image.open(
-        maimaidir / 'rainbow_bottom.png'
-    ).convert('RGBA').resize((1200, 200))
 
     def __init__(self, image: Image.Image = None) -> None:
         self._im = image
         dr = ImageDraw.Draw(self._im)
-        self._sy = DrawText(dr, SIYUAN)
-        self._tb = DrawText(dr, TBFONT)
+        self._ha = DrawText(dr, HAN)
+        self._to = DrawText(dr, TORUS)
 
     #pylint: disable-next=too-many-locals
     def whiledraw(
         self,
-        data: Union[List[ChartInfo], List[PlayInfoDefault], List[PlayInfoDev]],
+        data: List[ChartInfo],
         best: bool,
-        height: int = 0
+        music_list: MusicList,
+        height: int = 0,
     ) -> None:
         """
         循环绘制成绩
@@ -142,7 +118,7 @@ class ScoreBaseImage:
         """
         # y为第一排纵向坐标，dy为各行间距
         dy = 114
-        if data and isinstance(data[0], ChartInfo):
+        if data:
             y = 235 if best else 1085
         else:
             y = height
@@ -187,7 +163,7 @@ class ScoreBaseImage:
                     (x + 217, y + 80)
                 )
 
-            self._tb.draw(
+            self._to.draw(
                 x + 26,
                 y + 98,
                 13,
@@ -198,7 +174,7 @@ class ScoreBaseImage:
             title = info.title
             if coloum_width(title) > 18:
                 title = change_column_width(title, 17) + '...'
-            self._sy.draw(
+            self._ha.draw(
                 x + 93,
                 y + 14,
                 14,
@@ -206,14 +182,14 @@ class ScoreBaseImage:
                 self.t_color[info.level_index],
                 anchor='lm'
             )
-            self._tb.draw(
+            self._to.draw(
                 x + 93,
                 y + 38,
                 30,
                 f'{info.achievements:.4f}%', self.t_color[info.level_index],
                 anchor='lm'
             )
-            self._tb.draw(
+            self._to.draw(
                 x + 219,
                 y + 65,
                 15,
@@ -221,7 +197,7 @@ class ScoreBaseImage:
                 self.t_color[info.level_index],
                 anchor='mm'
             )
-            self._tb.draw(
+            self._to.draw(
                 x + 93,
                 y + 65,
                 15,
@@ -229,7 +205,6 @@ class ScoreBaseImage:
                 self.t_color[info.level_index],
                 anchor='lm'
             )
-
 
 class DrawBest(ScoreBaseImage):
     """B50 绘制类"""
@@ -287,12 +262,12 @@ class DrawBest(ScoreBaseImage):
         return f'UI_DNM_DaniPlate_{num}.png'
 
     # pylint: disable-next=too-many-locals, too-many-branches, too-many-statements
-    async def draw(
-            self,
-            icon_name: Optional[str] = None,
-            plate_name: Optional[str] = None
-        ) -> Image.Image:
+    async def draw(self, music_list_data: MusicList, config: dict[str, Config]) -> Image.Image:
         """异步绘制"""
+        plate_name = config['plate']
+        icon_name = config['icon']
+        override = config['plate_override']
+
         logo = Image.open(maimaidir / 'logo.png').resize((249, 120))
         dx_rating = Image.open(maimaidir / self._find_rating_picture()).resize((186, 35))
         name = Image.open(maimaidir / 'Name.png')
@@ -301,36 +276,62 @@ class DrawBest(ScoreBaseImage):
         rating = Image.open(maimaidir / 'UI_CMN_Shougou_Rainbow.png').resize((270, 27))
 
         self._im.alpha_composite(logo, (14, 60))
-        if self.plate:
-            plate = Image.open(platedir / f'{self.plate}.png').resize((800, 130))
+
+        match plate_name:
+            case int():
+                try:
+                    plate = Image.open(platedir / f'UI_Plate_{plate_name:06d}.png')
+                except FileNotFoundError:
+                    print(f"[WARNING]无法找到编号为{plate_name}的内置姓名框，将用默认姓名框代替。")
+                    plate = Image.open(platedir / 'UI_Plate_000001.png')
+            case str():
+                try:
+                    plate = Image.open(platedir / plate_name).convert("RGBA")
+                except FileNotFoundError:
+                    try:
+                        plate = Image.open(root / plate_name).convert("RGBA")
+                    except FileNotFoundError:
+                        print(f"[WARNING]无法找到姓名框{plate_name}，将用默认姓名框代替。")
+                        plate = Image.open(platedir / 'UI_Plate_300501.png')
+                    else:
+                        print("[WARNING]姓名框的加载位置已经更改。请参阅README。")
+                else:
+                    if (abs(130 * plate.size[0] - 800 * plate.size[1]) >
+                        min(13 * plate.size[0], 80 * plate.size[1])):
+                        print("[WARNING]姓名框成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
+            case None:
+                plate = Image.open(icondir / 'UI_Icon_000001.png')
+        if self.plate and not override:
+            plate = Image.open(platedir / f'UI_Plate_{plate_finder(self.plate)}.png')
             if plate_name is not None:
-                print("由于有牌子，姓名框设置已被覆盖。")
-        else:
-            try:
-                plate = Image.open(root / plate_name).convert("RGBA")
-            except FileNotFoundError:
-                print(f"无法找到姓名框{plate_name}，将用默认姓名框代替。")
-                plate = Image.open(maimaidir / 'UI_Plate_300501.png')
-            else:
-                if (abs(130*plate.size[0] - 800*plate.size[1]) >
-                    min(13*plate.size[0],80*plate.size[1])):
-                    print("姓名框成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
-            finally:
-                plate = plate.resize((800, 130))
+                print("[INFO]服务器上的牌子设置已覆盖姓名框设置。")
+        plate = plate.resize((800, 130))
         self._im.alpha_composite(plate, (300, 60))
-        try:
-            if icon_name is not None:
-                icon = Image.open(root / icon_name).convert("RGBA")
-            else:
-                icon = Image.open(maimaidir / 'UI_Icon_309503.png')
-        except FileNotFoundError:
-            print(f"无法找到头像{icon_name}，将用默认头像代替。")
-            icon = Image.open(maimaidir / 'UI_Icon_309503.png')
-        else:
-            if 10 * abs(icon.size[0] - icon.size[1]) > min(icon.size[0], icon.size[1]):
-                print("头像成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
-        finally:
-            icon = icon.resize((120, 120))
+
+        match icon_name:
+            case int():
+                try:
+                    icon = Image.open(icondir / f'UI_Icon_{icon_name:06d}.png')
+                except FileNotFoundError:
+                    print(f"[WARNING]无法找到编号为{icon_name}的内置头像，将用默认头像代替。")
+                    icon = Image.open(icondir / 'UI_Icon_000001.png')
+            case str():
+                try:
+                    icon = Image.open(customdir / f'{icon_name}.png').convert("RGBA")
+                except FileNotFoundError:
+                    try:
+                        icon = Image.open(root / icon_name).convert("RGBA")
+                    except FileNotFoundError:
+                        print(f"[WARNING]无法找到头像{icon_name}，将用默认头像代替。")
+                        icon = Image.open(icondir / 'UI_Icon_000001.png')
+                    else:
+                        print("[WARNING]头像的加载位置已经更改。请参阅README。")
+                else:
+                    if 10 * abs(icon.size[0] - icon.size[1]) > min(icon.size[0], icon.size[1]):
+                        print("[WARNING]头像成功加载，但与目标形状偏离过大，显示效果可能与预期不符。")
+            case None:
+                icon = Image.open(icondir / 'UI_Icon_000001.png')
+        icon = icon.resize((120, 120))
         self._im.alpha_composite(icon, (305, 65))
         self._im.alpha_composite(dx_rating, (435, 72))
         rating_value = f'{self.rating:05d}'
@@ -344,20 +345,20 @@ class DrawBest(ScoreBaseImage):
         self._im.alpha_composite(class_level, (620, 60))
         self._im.alpha_composite(rating, (435, 160))
 
-        self._sy.draw(445, 135, 25, self.user_name, (0, 0, 0, 255), 'lm')
+        self._ha.draw(445, 135, 25, self.user_name, (0, 0, 0, 255), 'lm')
         sdrating, dxrating = sum((_.ra for _ in self.sd_best)), sum((_.ra for _ in self.dx_best))
-        self._tb.draw(
+        self._to.draw(
             570, 172, 17,
             f'B35: {sdrating} + B15: {dxrating} = {self.rating}',
             (0, 0, 0, 255), 'mm', 3, (255, 255, 255, 255)
         )
-        self._sy.draw(
+        self._ha.draw(
             700, 1570, 27,
             'Designed by Yuri-YuzuChaN & BlueDeer233.',
             self.text_color, 'mm', 5, (255, 255, 255, 255)
         )
 
-        self.whiledraw(self.sd_best, True)
-        self.whiledraw(self.dx_best, False)
+        self.whiledraw(self.sd_best, True, music_list_data)
+        self.whiledraw(self.dx_best, False, music_list_data)
 
         return self._im

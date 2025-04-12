@@ -77,3 +77,16 @@ def change_column_width(s: str, length: int) -> str:
         if res <= length:
             s_list.append(ch)
     return ''.join(s_list)
+
+
+def plate_finder(name: str) -> int:
+    """将汉字牌子名转化为数字编号"""
+    if name == "霸者":
+        return 6148
+    if name[0] == "真":
+        return 6101 + ("極", "神", "舞舞").index(name[1:])
+    if name[0] == "舞":
+        return 6149 + ("極", "将", "神", "舞舞").index(name[1:])
+    return (6104 +
+            4 * ("超", "檄", "橙", "暁", "桃", "櫻", "紫", "堇", "白", "雪", "辉").index(name[0]) +
+            ("極", "将", "神", "舞舞").index(name[1:]))
