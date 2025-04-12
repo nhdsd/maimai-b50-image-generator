@@ -1,5 +1,12 @@
 # 版本日志
 
+## [v1.2.0-rc2](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.2.0-rc2)
+
+**修复**
+- 修正了未完成的`README.md`以及其中的错误链接。
+
+`2025.04.13` | 发布候选
+
 ## [v1.2.0-rc1](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.2.0-rc1)
 
 **新功能**
@@ -17,6 +24,8 @@
 > - 自根目录读取自定义头像与姓名框
 > 
 > 这些功能将在`2.0.0`版本中彻底删除。
+
+`2025.04.13` | 发布候选
 
 ## [v1.1.0](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.1.0)
 
