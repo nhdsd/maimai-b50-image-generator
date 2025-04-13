@@ -4,6 +4,8 @@
 
 ## 使用方法
 
+<details open>
+
 ### 0 安装`Python`
 前往[`Python`官网](https://www.python.org/)安装。
 
@@ -30,9 +32,7 @@ pip install -r requirements.txt
 ### 6 查看输出
 在`output`文件夹中，查看输出的B50。[图片数据不对...](#图片数据错误) | [没生成图片...](#图片未生成)
 
----
-
-> 以下步骤为可选的。
+<details> <summary>可选步骤</summary>
 
 ### 7 自定义头像与姓名框
 在`custom`目录下保存你的头像与姓名框图片，然后[修改配置](#8-修改配置)。 
@@ -44,7 +44,12 @@ pip install -r requirements.txt
 附加包提供了一些常见的头像与姓名框。在[OneDrive](https://1drv.ms/u/c/68dff5f977fb346f/EX_PkI8HREtHgI6Fyh1fy14BNFor-yevkQ314XCw9wRV3w?e=k7VWuB)处下载后
 把`static`文件夹复制到程序根目录处与原有的文件夹合并即可。附加包中的头像与姓名框的编号为文件名中的数字，不含前导零。
 
+</details>
+</details>
+
 ## 帮助 & 疑难解答
+
+<details open>
 
 ### 非发布版
 
@@ -115,6 +120,8 @@ py ./b50.py
 ### JSON文件
 虽然我们在上文中提到可以使用文本编辑器打开`config.json`进行编辑，但是这是一个具有特定格式的`JSON`文件，破坏其格式会影响此程序运行。
 查看[此教程](https://www.runoob.com/json/json-syntax.html)可以让你对此有初步了解，避免意外破坏格式。
+
+</details>
 
 ## 开发中特性
 > 暂时没有开发中特性。欢迎[提交 issue](https://github.com/nhdsd/maimai-b50-image-generator/issues/new)并提出建议。

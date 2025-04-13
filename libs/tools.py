@@ -85,8 +85,17 @@ def plate_finder(name: str) -> int:
         return 6148
     if name[0] == "真":
         return 6101 + ("極", "神", "舞舞").index(name[1:])
-    if name[0] == "舞":
-        return 6149 + ("極", "将", "神", "舞舞").index(name[1:])
-    return (6104 +
-            4 * ("超", "檄", "橙", "暁", "桃", "櫻", "紫", "堇", "白", "雪", "辉").index(name[0]) +
-            ("極", "将", "神", "舞舞").index(name[1:]))
+    gen_mapping = {
+        "超": 6104, "檄": 6108, "橙": 6112, "暁": 6116, "桃": 6120, "櫻": 6124,
+        "紫": 6128, "堇": 6132, "白": 6136, "雪": 6140, "辉": 6144, "舞": 6149,
+        "熊": 55101, "爽": 159101, "宙": 259101, "祭": 359101, "双": 459101, "宴": 559101,
+    }
+    try:
+        gen = gen_mapping[name[0]]
+    except KeyError:
+        raise ValueError(f"[FATAL]无法识别的牌子：{name}") from None
+    try:
+        level = ("極", "将", "神", "舞舞").index(name[1:])
+    except ValueError:
+        raise ValueError(f"[FATAL]无法识别的牌子：{name}") from None
+    return gen + level
