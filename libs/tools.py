@@ -94,7 +94,8 @@ def plate_finder(name: str) -> int:
         gen = gen_mapping[name[0]]
     except KeyError:
         raise ValueError(f"[FATAL]无法识别的牌子：{name}") from None
-    level = ("極", "将", "神", "舞舞").index(name[1:])
-    if level == -1:
+    try:
+        level = ("極", "将", "神", "舞舞").index(name[1:])
+    except ValueError:
         raise ValueError(f"[FATAL]无法识别的牌子：{name}") from None
     return gen + level
