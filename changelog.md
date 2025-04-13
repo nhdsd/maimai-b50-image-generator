@@ -1,13 +1,32 @@
 # 版本日志
 
+## [v1.2.0-rc3](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.2.0-rc3)
+
+<details>
+
+**修复**
+- 牌子转化函数转换不完全([#2](https://github.com/nhdsd/maimai-b50-image-generator/issues/2))
+
+> 基础包中本次修复对应的牌子文件目前缺失(需要下载附加包补全)，后续正式版将会把文件移动到基础包。
+
+`2025.04.13` | 发布候选
+
+</details>
+
 ## [v1.2.0-rc2](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.2.0-rc2)
+
+<details>
 
 **修复**
 - 修正了未完成的`README.md`以及其中的错误链接。
 
 `2025.04.13` | 发布候选
 
+</details>
+
 ## [v1.2.0-rc1](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.2.0-rc1)
+
+<details>
 
 **新功能**
 - 配置项`plate_override`：为`true`时，将在有牌子时覆盖本地的自定义姓名框设置。默认为`false`。
@@ -27,13 +46,21 @@
 
 `2025.04.13` | 发布候选
 
+</details>
+
 ## [v1.1.0](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.1.0)
+
+<details>
 
 > 此版本是从上一个发布候选版本(`rc`)转化而来的，没有实质性更改。
 
 `2025.04.11` | 正式版
 
+</details>
+
 ## [v1.1.0-rc1](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.1.0-rc1)
+
+<details>
 
 **新功能**
 - 自定义头像与姓名框\*
@@ -51,8 +78,14 @@
 
 `2025.04.08` | 发布候选版
 
+</details>
+
 ## [v1.0.0](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.0.0)
+
+<details>
 
 - 基本功能实现
 
 `2025.04.07` | 正式版
+
+</details>
