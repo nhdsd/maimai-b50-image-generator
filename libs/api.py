@@ -1,34 +1,36 @@
-"""API"""
+"""
+API interface for diving fish.
+"""
 
 from io import BytesIO
-from typing import List, Optional, Union, Any
+from typing import List, Dict, Union, Any, cast
 import asyncio
 import traceback
 from pathlib import Path
 from aiohttp import ClientSession, ClientTimeout
 from .models import Music, UserInfo
-from .consts import music_file, chart_file, coverdir
+from .consts import music_file, coverdir
 from .tools import openfile, writefile
 from .errors import (
     UserNotFoundError, UserDisabledQueryError, ServerError, EnterError, CoverError, UnknownError
 )
 
+MAI_PROXY_API = 'https://www.diving-fish.com/api/maimaidxprober'
+MAI_COVER = 'https://www.diving-fish.com/covers'
+MAI_ALIAS_API = 'https://www.yuzuchan.moe/api/maimaidx'
+
 class MaimaiAPI:
-    """API类"""
-    MaiProxyAPI = 'https://www.diving-fish.com/api/maimaidxprober'
-    MaiCover = 'https://www.diving-fish.com/covers'
-    MaiAliasAPI = 'https://www.yuzuchan.moe/api/maimaidx'
+    """
+    API Class
+    """
 
-    def __init__(self) -> None:
-        return
-
-    async def _request(self, method: str, url: str, **kwargs) -> Any:
+    async def _request(self, method: str, url: str, **kwargs: Any) -> Any:
         session = ClientSession(timeout=ClientTimeout(total=30))
         res = await session.request(method, url, **kwargs)
 
         data = None
 
-        if self.MaiAliasAPI in url:
+        if MAI_ALIAS_API in url:
             if res.status == 200:
                 data = (await res.json())['content']
             elif res.status == 400:
@@ -37,7 +39,7 @@ class MaimaiAPI:
                 raise ServerError
             else:
                 raise UnknownError
-        elif self.MaiProxyAPI in url:
+        elif MAI_PROXY_API in url:
             if res.status == 200:
                 data = await res.json()
             elif res.status == 400:
@@ -49,39 +51,24 @@ class MaimaiAPI:
         await session.close()
         return data
 
-    async def music_data(self):
-        """获取曲目数据"""
-        return await self._request('GET', self.MaiProxyAPI + '/music_data')
-
-    async def chart_stats(self):
-        """获取单曲数据"""
-        return await self._request('GET', self.MaiProxyAPI + '/chart_stats')
+    async def music_data(self) -> List[Dict[str, Any]]:
+        """Get music data from diving fish."""
+        return await self._request('GET', MAI_PROXY_API + '/music_data')
 
     async def query_user(self, username: str):
-        """
-        请求用户数据
-
-        - `project`: 查询的功能
-            - `player`: 查询用户b50
-            - `plate`: 按版本查询用户游玩成绩
-        - `username`: 查分器用户名
-        """
+        """Get user data from diving fish."""
         post_data = {}
         post_data['username'] = username
         post_data['b50'] = True
         print("[INFO]正在与服务器通信...(获取游玩信息)")
-        return await self._request('POST', self.MaiProxyAPI + '/query/player', json=post_data)
+        return await self._request('POST', MAI_PROXY_API + '/query/player', json=post_data)
 
-    async def transfer_music(self):
-        """中转查分器曲目数据"""
-        return await self._request('GET', self.MaiAliasAPI + '/maimaidxmusic')
-
-    async def transfer_chart(self):
-        """中转查分器单曲数据"""
-        return await self._request('GET', self.MaiAliasAPI + '/maimaidxchartstats')
+    async def transfer_music(self) -> List[Dict[str, Any]]:
+        """Get music data from yuzuapi."""
+        return await self._request('GET', MAI_ALIAS_API + '/maimaidxmusic')
 
     async def download_music_pictrue(self, song_id: Union[int, str]) -> Union[Path, BytesIO]:
-        """下载曲目封面"""
+        """Download music illustration from diving fish."""
         try:
             if (file := coverdir / f'{song_id}.png').exists():
                 return file
@@ -94,7 +81,7 @@ class MaimaiAPI:
                 for _id in [song_id + 10000, song_id - 10000]:
                     if (file := coverdir / f'{_id}.png').exists():
                         return file
-            pic = await self._request('GET', self.MaiCover + f'/{song_id:05d}.png')
+            pic = await self._request('GET', MAI_COVER + f'/{song_id:05d}.png')
             return BytesIO(pic)
         except CoverError:
             return coverdir / '11000.png'
@@ -104,17 +91,17 @@ class MaimaiAPI:
 mai_api = MaimaiAPI()
 
 class MusicList(List[Music]):
-    """曲目列表类"""
-    def by_id(self, music_id: Union[str, int]) -> Optional[Music]:
-        """按ID搜索"""
+    """Music List"""
+    def by_id(self, music_id: Union[str, int]) -> Music:
+        """Search music by id"""
         for music in self:
             if music.id == str(music_id):
                 return music
-        return None
+        raise ValueError(f"[FATAL]曲目ID {music_id} 不存在")
 
 
 async def get_music_list() -> MusicList:
-    """获取所有数据"""
+    """Get all music data from diving fish."""
     print("[INFO]正在与服务器通信...(获取曲目信息)")
     try:
         try:
@@ -126,11 +113,11 @@ async def get_music_list() -> MusicList:
             await writefile(music_file, music_data)
         except UnknownError:
             print('[ERROE]从diving-fish获取maimaiDX曲目数据失败，请检查网络环境。已切换至本地暂存文件')
-            music_data = await openfile(music_file)
+            music_data = cast(List[Dict[str, Any]], await openfile(music_file))
         except Exception: # pylint: disable=broad-exception-caught
             print(f'[ERROR]Error: {traceback.format_exc()}')
             print('[ERROR]maimaiDX曲目数据获取失败，请检查网络环境。已切换至本地暂存文件')
-            music_data = await openfile(music_file)
+            music_data = cast(List[Dict[str, Any]], await openfile(music_file))
     except FileNotFoundError:
         print(
             '[FATAL]未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/music_data" '
@@ -139,44 +126,16 @@ async def get_music_list() -> MusicList:
         raise
 
     print("[INFO]正在与服务器通信...(获取谱面信息)")
-    try:
-        try:
-            chart_stats = await mai_api.chart_stats()
-            await writefile(chart_file, chart_stats)
-        except asyncio.exceptions.TimeoutError:
-            print('[ERROR]从diving-fish获取maimaiDX谱面数据超时，正在使用yuzuapi中转获取谱面数据')
-            chart_stats = await mai_api.transfer_chart()
-            await writefile(chart_file, chart_stats)
-        except UnknownError:
-            print('[ERROR]从diving-fish获取maimaiDX谱面数据错误，请检查网络环境。已切换至本地暂存文件')
-            chart_stats = await openfile(chart_file)
-        except Exception: # pylint: disable=broad-exception-caught
-            print(f'[ERROR]Error: {traceback.format_exc()}')
-            print('maimaiDX谱面数据获取失败，请检查网络环境。已切换至本地暂存文件')
-            chart_stats = await openfile(chart_file)
-    except FileNotFoundError:
-        print(
-            '[FATAL]未找到文件，请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/chart_stats" '
-            '将内容保存为 "music_chart.json" 存放在 "static" 目录下并重启此工具'
-        )
-        raise
 
-    total_list: MusicList = MusicList()
-    for music in music_data:
-        if music['id'] in chart_stats['charts']:
-            _stats = [_data if _data else None for _data in chart_stats['charts'][music['id']]] \
-                if {} in chart_stats['charts'][music['id']] else chart_stats['charts'][music['id']]
-        else:
-            _stats = None
-        total_list.append(Music(stats=_stats, **music))
+    total_list: MusicList = MusicList((Music(**music) for music in music_data))
 
     return total_list
 
 async def get_local_music_list() -> MusicList:
-    """获取本地曲目数据"""
+    """Get all music data from local file."""
     print("[INFO]正在读取本地曲目数据...")
     try:
-        music_data = await openfile(music_file)
+        music_data = cast(List[Dict[str, Any]], await openfile(music_file))
     except FileNotFoundError:
         print(
             '[ERROR]未找到文件，即将向服务器请求曲目信息。\n'
@@ -184,11 +143,11 @@ async def get_local_music_list() -> MusicList:
         )
         try:
             music_data = await mai_api.music_data()
-            await writefile(music_data, music_file)
+            await writefile(music_file, music_data)
         except asyncio.exceptions.TimeoutError:
             print('[ERROR]从diving-fish获取maimaiDX曲目数据超时，正在使用yuzuapi中转获取曲目数据')
             music_data = await mai_api.transfer_music()
-            await writefile(music_data, music_file)
+            await writefile(music_file, music_data)
         except UnknownError:
             print(
                 '[FATAL]从diving-fish获取maimaiDX曲目数据错误。请检查网络环境。\n'
@@ -205,53 +164,16 @@ async def get_local_music_list() -> MusicList:
             )
             raise
 
-    print("[INFO]正在读取本地谱面数据...")
-    try:
-        chart_stats = await openfile(chart_file)
-    except FileNotFoundError:
-        print(
-            '[ERROR]未找到文件，即将向服务器请求谱面信息。\n'
-            '[INFO]正在与服务器通信...(获取谱面信息)'
-        )
-        try:
-            chart_stats = await mai_api.chart_stats()
-            await writefile(chart_file, chart_stats)
-        except asyncio.exceptions.TimeoutError:
-            print('[ERROR]从diving-fish获取maimaiDX谱面数据超时，正在使用yuzuapi中转获取谱面数据')
-            chart_stats = await mai_api.transfer_chart()
-            await writefile(chart_file, chart_stats)
-        except UnknownError:
-            print(
-                '[FATAL]从diving-fish获取maimaiDX谱面数据错误。请检查网络环境。\n'
-                '[FATAL]请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/chart_stats"'
-                '将内容保存为 "music_chart.json" 存放在 "static" 目录下并重启此工具'
-            )
-            raise
-        except Exception: # pylint: disable=broad-exception-caught
-            print(f'[FATAL]Error: {traceback.format_exc()}')
-            print(
-                '[FATAL]maimaiDX数据获取错误，请检查网络环境。\n'
-                '[FATAL]请自行使用浏览器访问 "https://www.diving-fish.com/api/maimaidxprober/chart_stats"'
-                '将内容保存为 "music_chart.json" 存放在 "static" 目录下并重启此工具'
-            )
-            raise
 
-    total_list: MusicList = MusicList()
-    for music in music_data:
-        if music['id'] in chart_stats['charts']:
-            _stats = [_data if _data else None for _data in chart_stats['charts'][music['id']]] \
-                if {} in chart_stats['charts'][music['id']] else chart_stats['charts'][music['id']]
-        else:
-            _stats = None
-        total_list.append(Music(stats=_stats, **music))
+    total_list: MusicList = MusicList((Music(**music) for music in music_data))
 
     return total_list
 
 async def music_list_dispatcher(local_first: bool) -> MusicList:
-    """曲目列表"""
+    """Music list dispatcher."""
     return await get_local_music_list() if local_first else await get_music_list()
 
 
-async def get_user_info(username: str) -> Optional[dict]:
-    """获取用户信息"""
+async def get_user_info(username: str) -> UserInfo:
+    """Get user info from diving fish."""
     return UserInfo(**(await mai_api.query_user(username)))

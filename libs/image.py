@@ -16,7 +16,7 @@ from .config import Config
 
 # pylint: disable-next=too-few-public-methods
 class DrawText:
-    """文字绘制类"""
+    """Text drawing class"""
     def __init__(self, image: ImageDraw.ImageDraw, font: Path) -> None:
         self._img = image
         self._font = str(font)
@@ -33,9 +33,9 @@ class DrawText:
         stroke_width: int = 0,
         stroke_fill: Tuple[int, int, int, int] = (0, 0, 0, 0)
     ):
-        """绘图主方法"""
+        """Main drawing function"""
         font = ImageFont.truetype(self._font, size)
-        self._img.text(
+        self._img.text( # type: ignore
             (pos_x, pos_y),
             str(text),
             color,
@@ -47,14 +47,7 @@ class DrawText:
 
 
 def music_picture(music_id: Union[int, str]) -> Path:
-    """
-    获取谱面图片路径
-
-    Params:
-        `music_id`: 谱面 ID
-    Returns:
-        `Path`
-    """
+    """Get music illustration path"""
     music_id = int(music_id)
     if (_path := coverdir / f'{music_id}.png').exists():
         return _path
@@ -70,7 +63,7 @@ def music_picture(music_id: Union[int, str]) -> Path:
 
 # pylint: disable-next=too-few-public-methods
 class ScoreBaseImage:
-    """基本分数绘制类"""
+    """Score base class"""
     _diff = [
         Image.open(maimaidir / 'b50_score_basic.png'),
         Image.open(maimaidir / 'b50_score_advanced.png'),
@@ -94,7 +87,7 @@ class ScoreBaseImage:
         (138, 0, 226, 255)
     ]
 
-    def __init__(self, image: Image.Image = None) -> None:
+    def __init__(self, image: Image.Image) -> None:
         self._im = image
         dr = ImageDraw.Draw(self._im)
         self._ha = DrawText(dr, HAN)
@@ -108,16 +101,10 @@ class ScoreBaseImage:
         music_list: MusicList,
         height: int = 0,
     ) -> None:
-        """
-        循环绘制成绩
-
-        Params:
-            `data`: 数据
-            `dx`: 是否为新版本成绩
-            `height`: 起始高度
-        """
+        """Main drawing function"""
         # y为第一排纵向坐标，dy为各行间距
         dy = 114
+        x = 0
         if data:
             y = 235 if best else 1085
         else:
@@ -207,7 +194,7 @@ class ScoreBaseImage:
             )
 
 class DrawBest(ScoreBaseImage):
-    """B50 绘制类"""
+    """B50 drawing class"""
     def __init__(self, user_info: UserInfo) -> None:
         super().__init__(Image.open(maimaidir / 'b50_bg.png').convert('RGBA'))
         self.user_name = user_info.nickname
@@ -218,12 +205,6 @@ class DrawBest(ScoreBaseImage):
         self.dx_best = user_info.charts.dx
 
     def _find_rating_picture(self) -> str:
-        """
-        寻找指定的Rating图片
-
-        Returns:
-            `str` 返回图片名称
-        """
         if self.rating < 1000:
             num = '01'
         elif self.rating < 2000:
@@ -249,12 +230,6 @@ class DrawBest(ScoreBaseImage):
         return f'UI_CMN_DXRating_{num}.png'
 
     def _find_match_level_picture(self) -> str:
-        """
-        寻找匹配等级图片
-
-        Returns:
-            `str` 返回图片名称
-        """
         if self.add_rating <= 10:
             num = f'{self.add_rating:02d}'
         else:
@@ -263,7 +238,7 @@ class DrawBest(ScoreBaseImage):
 
     # pylint: disable-next=too-many-locals, too-many-branches, too-many-statements
     async def draw(self, music_list_data: MusicList, config: dict[str, Config]) -> Image.Image:
-        """异步绘制"""
+        """Draw B50 async"""
         plate_name = config['plate']
         icon_name = config['icon']
         override = config['plate_override']

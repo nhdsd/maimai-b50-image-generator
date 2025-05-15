@@ -12,7 +12,6 @@ if not os.path.exists(OUTPUT):
 user_config : Path = root / 'config.json'
 config_json: Path = static / 'config.json'
 music_file: Path = static / 'music_data.json'
-chart_file: Path = static / 'music_chart.json'
 
 # 静态资源路径
 maimaidir: Path = static / 'mai' / 'pic'
