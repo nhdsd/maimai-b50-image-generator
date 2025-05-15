@@ -2,6 +2,7 @@
 from pathlib import Path
 import os
 from typing import Dict
+from enum import StrEnum, auto
 
 # 文件路径
 root: Path = Path(__file__).parent.parent
@@ -12,7 +13,6 @@ if not os.path.exists(OUTPUT):
 user_config : Path = root / 'config.json'
 config_json: Path = static / 'config.json'
 music_file: Path = static / 'music_data.json'
-chart_file: Path = static / 'music_chart.json'
 
 # 静态资源路径
 maimaidir: Path = static / 'mai' / 'pic'
@@ -32,3 +32,8 @@ score_rank_l: Dict[str, str] = {'d': 'D', 'c': 'C', 'b': 'B', 'bb': 'BB', 'bbb':
 fcl: Dict[str, str] = {'fc': 'FC', 'fcp': 'FCp', 'ap': 'AP', 'app': 'APp'}
 fsl: Dict[str, str] = {'fs': 'FS', 'fsp': 'FSp', 'fsd': 'FSD', 'fdx': 'FSD', 'fsdp': 'FSDp',
                        'fdxp': 'FSDp', 'sync': 'Sync'}
+
+class Source(StrEnum):
+    """数据源"""
+    DIVING_FISH = auto()
+    DIVING_FISH_LOCAL = auto()

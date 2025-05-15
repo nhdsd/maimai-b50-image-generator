@@ -3,35 +3,25 @@
 此文件需要进一步重构。
 """
 
-from typing import Optional, List, Union
-from collections import namedtuple
+from typing import Optional, List, Union, NamedTuple
 
 from pydantic import BaseModel, Field
-##### Music
-class Stats(BaseModel):
-    """统计信息"""
-    cnt: Optional[float] = None
-    diff: Optional[str] = None
-    fit_diff: Optional[float] = None
-    avg: Optional[float] = None
-    avg_dx: Optional[float] = None
-    std_dev: Optional[float] = None
-    dist: Optional[List[int]] = None
-    fc_dist: Optional[List[float]] = None
 
-
-Notes1 = namedtuple('Notes', ['tap', 'hold', 'slide', 'brk'])
-Notes2 = namedtuple('Notes', ['tap', 'hold', 'slide', 'touch', 'brk'])
+Notes1 = NamedTuple('Notes', [('tap', int), ('hold', int), ('slide', int), ('brk', int)])
+Notes2 = NamedTuple(
+    'Notes',
+    [('tap', int), ('hold', int), ('slide', int), ('touch', int), ('brk', int)]
+)
 
 
 class Chart(BaseModel):
-    """谱面内容信息"""
+    """Chart Info"""
     notes: Union[Notes1, Notes2]
-    charter: str = None
+    charter: Optional[str] = None
 
 
 class BasicInfo(BaseModel):
-    """谱面基本信息"""
+    """Chart Basic Info"""
     title: str
     artist: str
     genre: str
@@ -51,7 +41,6 @@ class Music(BaseModel):
     cids: List[int]
     charts: List[Chart]
     basic_info: BasicInfo
-    stats: Optional[List[Optional[Stats]]] = []
     diff: Optional[List[int]] = []
 
 
@@ -75,15 +64,15 @@ class ChartInfo(BaseModel):
 
 class Data(BaseModel):
     """玩家游玩数据"""
-    sd: Optional[List[ChartInfo]] = None
-    dx: Optional[List[ChartInfo]] = None
+    sd: List[ChartInfo]
+    dx: List[ChartInfo]
 
 
 class UserInfo(BaseModel):
     """玩家信息"""
-    additional_rating: Optional[int]
-    charts: Optional[Data]
-    nickname: Optional[str]
+    additional_rating: int
+    charts: Data
+    nickname: str
     plate: Optional[str] = None
-    rating: Optional[int]
-    username: Optional[str]
+    rating: int
+    username: str

@@ -1,5 +1,15 @@
 # 版本日志
 
+## [v1.2.1](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.2.1)
+
+<details>
+
+**新功能**
+- 配置项`source`：配置 b50 数据的来源。默认为`diving_fish`。
+  > 此配置项是枚举类型。请参考[README](./README.md#配置文件)或[源代码](./libs/consts.py)查看所有允许的值。
+
+</details>
+
 ## [v1.2.0](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.2.0)
 
 <details>
@@ -87,7 +97,7 @@
 
 这些功能将在`2.0.0`版本中彻底删除。
 
-`2025.04.08` | 发布候选版
+`2025.04.08` | 发布候选
 
 </details>
 

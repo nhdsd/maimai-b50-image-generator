@@ -1,33 +1,33 @@
-"""文件读写工具"""
+"""
+工具函数
+"""
 
 import json
-from typing import Any, Union
+from typing import Any, Dict, List, Union
 from pathlib import Path
+from sys import exit as q
 
 import aiofiles
 
-async def openfile(file: Path) -> Union[dict, list]:
-    """异步IO读取文件"""
+async def openfile(file: Path) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+    """Read JSON async."""
     async with aiofiles.open(file, 'r', encoding='utf-8') as f:
-        data = json.loads(await f.read())
+        try:
+            data: Dict[str, Any] = json.loads(await f.read())
+        except json.JSONDecodeError:
+            print(f"[FATAL]无法读取文件：{file}。请检查其 JSON 格式。")
+            q(1)
     return data
 
 
 async def writefile(file: Path, data: Any) -> bool:
-    """异步IO写入文件"""
+    """Write JSON async."""
     async with aiofiles.open(file, 'w', encoding='utf-8') as f:
         await f.write(json.dumps(data, ensure_ascii=False, indent=4))
     return True
 
-def dx_score(dx: int) -> int:
-    """
-    获取DX评分星星数量
-
-    Params:
-        `dx`: dx百分比
-    Returns:
-        `int` 返回星星数量
-    """
+def dx_score(dx: float) -> int:
+    """Convert DX score to star count."""
     if dx <= 85:
         star_count = 0
     elif dx <= 90:
@@ -44,7 +44,7 @@ def dx_score(dx: int) -> int:
 
 
 def get_char_width(o: int) -> int:
-    """字符宽度"""
+    """Do what you think it does."""
     widths = [
         (126, 1), (159, 0), (687, 1), (710, 0), (711, 1), (727, 0), (733, 1), (879, 0), (1154, 1),
         (1161, 0), (4347, 1), (4447, 2), (7467, 1), (7521, 0), (8369, 1), (8426, 0), (9000, 1),
@@ -61,7 +61,7 @@ def get_char_width(o: int) -> int:
 
 
 def coloum_width(s: str) -> int:
-    """列宽"""
+    """Do what you think it does."""
     res = 0
     for ch in s:
         res += get_char_width(ord(ch))
@@ -69,9 +69,9 @@ def coloum_width(s: str) -> int:
 
 
 def change_column_width(s: str, length: int) -> str:
-    """调整列宽"""
+    """Do what you think it does."""
     res = 0
-    s_list = []
+    s_list: List[str] = []
     for ch in s:
         res += get_char_width(ord(ch))
         if res <= length:
@@ -80,7 +80,7 @@ def change_column_width(s: str, length: int) -> str:
 
 
 def plate_finder(name: str) -> int:
-    """将汉字牌子名转化为数字编号"""
+    """Convert plate name to number."""
     if name == "霸者":
         return 6148
     if name[0] == "真":
@@ -92,9 +92,6 @@ def plate_finder(name: str) -> int:
     }
     try:
         gen = gen_mapping[name[0]]
-    except KeyError:
-        raise ValueError(f"[FATAL]无法识别的牌子：{name}") from None
-    try:
         level = ("極", "将", "神", "舞舞").index(name[1:])
     except ValueError:
         raise ValueError(f"[FATAL]无法识别的牌子：{name}") from None
