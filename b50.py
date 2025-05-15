@@ -11,7 +11,7 @@ from libs import *
 
 async def generate(config: dict[str, Config]) -> None:
     """Entry point for generating B50."""
-    mai_info = await get_user_info(cast(str, config['username']))
+    mai_info = await get_user_data(cast(str, config['source']), cast(str, config['username']))
     draw_best = DrawBest(mai_info)
     try:
         music_list = await music_list_dispatcher(cast(bool, config['local_first']))

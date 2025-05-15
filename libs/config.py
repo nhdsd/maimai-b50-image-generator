@@ -4,9 +4,10 @@ import json
 from typing import Dict, Optional, Union
 from sys import exit as q
 
-from .consts import user_config
+from .consts import user_config, Source
 
 type Config = Optional[Union[str, int, bool]]
+
 def load_config() -> Dict[str, Config]:
     """Load config from config.json."""
     if not os.path.exists(user_config):
@@ -46,10 +47,19 @@ def load_config() -> Dict[str, Config]:
         local_first = config['local_first']
     except KeyError:
         local_first = False
+    try:
+        source = config['source']
+        if source not in Source:
+            print(f"[ERROR]配置文件错误，数据源不合法：{source}。请检查配置文件。已经切换为默认值 diving_fish。")
+            source = "diving_fish"
+    except KeyError:
+        source = "diving_fish"
+
     return {
         'username': username,
         'icon': icon,
         'plate': plate,
         'plate_override': plate_override,
-        'local_first': local_first
+        'local_first': local_first,
+        'source': source
     }

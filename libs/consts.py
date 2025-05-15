@@ -2,6 +2,7 @@
 from pathlib import Path
 import os
 from typing import Dict
+from enum import StrEnum, auto
 
 # 文件路径
 root: Path = Path(__file__).parent.parent
@@ -31,3 +32,8 @@ score_rank_l: Dict[str, str] = {'d': 'D', 'c': 'C', 'b': 'B', 'bb': 'BB', 'bbb':
 fcl: Dict[str, str] = {'fc': 'FC', 'fcp': 'FCp', 'ap': 'AP', 'app': 'APp'}
 fsl: Dict[str, str] = {'fs': 'FS', 'fsp': 'FSp', 'fsd': 'FSD', 'fdx': 'FSD', 'fsdp': 'FSDp',
                        'fdxp': 'FSDp', 'sync': 'Sync'}
+
+class Source(StrEnum):
+    """数据源"""
+    DIVING_FISH = auto()
+    DIVING_FISH_LOCAL = auto()

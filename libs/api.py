@@ -55,7 +55,7 @@ class MaimaiAPI:
         """Get music data from diving fish."""
         return await self._request('GET', MAI_PROXY_API + '/music_data')
 
-    async def query_user(self, username: str):
+    async def query_user(self, username: str) -> Dict[str, Any]:
         """Get user data from diving fish."""
         post_data = {}
         post_data['username'] = username

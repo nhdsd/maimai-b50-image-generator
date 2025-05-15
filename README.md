@@ -104,14 +104,19 @@ py ./b50.py
 自[`1.1.0-rc1`](https://github.com/nhdsd/maimai-b50-image-generator/releases/tag/v1.1.0-rc1)起，脚本的配置改为使用`JSON`文件。
 文件的格式如下：
 ```
-* 根标签。(Compound)
+* [compound]根标签
 |-- * [str]username | 查分器用户名。
 |-- ~ [str, int]plate | 姓名框文件名或是编号。
 |-- ~ [str, int]icon | 头像文件名或是编号。
 |-- ~ [bool]plate_override | 是否允许牌子设置覆盖自定义姓名框设置。(false)
 |-- ~ [bool]local_first | 是否优先从本地加载资源文件。(false)
+|-- ~ [str(enum)]source | 数据来源。("diving_fish")
 
 * 为必选项，[]中为类别，()中为默认值。
+```
+enum 类型配置项的所有可选项：
+```
+source | "diving_fish", "diving_fish_local"
 ```
 你可以自行按照需求修改，删除此文件将重置所有配置。
 
