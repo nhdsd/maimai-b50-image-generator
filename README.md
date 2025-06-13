@@ -3,7 +3,7 @@
 让你无需加入任何QQ群也能生成舞萌的B50图片，社恐玩家的不二之选。  
 
 > [!NOTE]
-> 请查看[#3](https://github.com/nhdsd/maimai-b50-image-generator/releases/issues/3)。当该 issue open 时则说明有生效中的公告。
+> 请查看[#4](https://github.com/nhdsd/maimai-b50-image-generator/releases/issues/4)。当该 issue open 时则说明有生效中的公告。
 
 ## 使用方法
 
