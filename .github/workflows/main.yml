@@ -1,0 +1,74 @@
+name: Single Test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'b50.py'
+      - 'libs/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'b50.py'
+      - 'libs/**'
+      
+  workflow_dispatch:
+
+jobs:
+  run-b50:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main repo (maimai-b50-image-generator)
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Get latest commit hash of private resource repo
+      id: get-resource-hash
+      run: |
+        curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/nhdsd/github-actions-resources/commits/main \
+          | jq -r '.sha' > resource_commit.txt
+        echo "commit=$(cat resource_commit.txt)" >> $GITHUB_OUTPUT
+
+    - name: Cache resource files
+      id: cache-resources
+      uses: actions/cache@v4
+      with:
+        path: _resources
+        key: resources-${{ steps.get-resource-hash.outputs.commit }}
+
+    - name: Clone private resources repo if cache miss
+      if: steps.cache-resources.outputs.cache-hit != 'true'
+      run: |
+        git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/nhdsd/github-actions-resources.git _resources
+
+    - name: Copy resource files to working directory
+      run: |
+        cp _resources/maimai-b50-image-generator/config.json ./config.json
+        cp _resources/maimai-b50-image-generator/static/music_data.json ./static/music_data.json
+        cp _resources/maimai-b50-image-generator/static/ResourceHanRoundedCN-Bold.ttf ./static/ResourceHanRoundedCN-Bold.ttf
+        cp _resources/maimai-b50-image-generator/static/Torus\ Semibold.otf ./static/Torus\ Semibold.otf
+
+        mkdir -p ./static/mai/cover
+        mkdir -p ./static/mai/icon
+        mkdir -p ./static/mai/plate
+        mkdir -p ./static/mai/pic
+
+        cp _resources/maimai-b50-image-generator/static/mai/cover/0.png ./static/mai/cover/0.png
+        cp _resources/maimai-b50-image-generator/static/mai/icon/UI_Icon_000302.png ./static/mai/icon/UI_Icon_000302.png
+        cp _resources/maimai-b50-image-generator/static/mai/plate/UI_Plate_458025.png ./static/mai/plate/UI_Plate_458025.png
+        cp -r _resources/maimai-b50-image-generator/static/mai/pic/* ./static/mai/pic/
+
+    - name: Run b50.py
+      run: |
+        python b50.py
