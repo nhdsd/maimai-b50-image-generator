@@ -50,7 +50,7 @@ jobs:
     - name: Clone private resources repo if cache miss
       if: steps.cache-resources.outputs.cache-hit != 'true'
       run: |
-        git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/nhdsd/github-actions-resources.git _resources
+        git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/nhdsd/github-actions-resources _resources
 
     - name: Copy resource files to working directory
       run: |
