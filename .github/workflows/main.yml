@@ -1,4 +1,4 @@
-name: Single Test
+name: Run b50.py with cached resources and pip dependencies
 
 on:
   push:
@@ -11,7 +11,6 @@ on:
     paths:
       - 'b50.py'
       - 'libs/**'
-      
   workflow_dispatch:
 
 jobs:
@@ -19,13 +18,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout main repo (maimai-b50-image-generator)
+    - name: Checkout main repo
       uses: actions/checkout@v4
 
     - name: Set up Python 3.12.10
       uses: actions/setup-python@v5
       with:
         python-version: '3.12.10'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/pip
+        key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          pip-${{ runner.os }}-
 
     - name: Install dependencies
       run: |
@@ -50,7 +58,7 @@ jobs:
     - name: Clone private resources repo if cache miss
       if: steps.cache-resources.outputs.cache-hit != 'true'
       run: |
-        git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/nhdsd/github-actions-resources _resources
+        git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/nhdsd/github-actions-resources.git _resources
 
     - name: Copy resource files to working directory
       run: |
