@@ -62,6 +62,7 @@ jobs:
 
     - name: Copy resource files to working directory
       run: |
+        mkdir -p ./static
         cp _resources/maimai-b50-image-generator/config.json ./config.json
         cp _resources/maimai-b50-image-generator/static/music_data.json ./static/music_data.json
         cp _resources/maimai-b50-image-generator/static/ResourceHanRoundedCN-Bold.ttf ./static/ResourceHanRoundedCN-Bold.ttf
